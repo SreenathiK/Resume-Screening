@@ -1,15 +1,10 @@
-"""
-Data models for the Resume Screening Environment.
+# models.py - No openenv dependency
 
-This environment simulates a real-world resume screening system for multiple job roles.
-"""
-
-from typing import List, Optional, Literal
-from pydantic import Field
-from openenv.core.env_server.types import Action, Observation
+from pydantic import BaseModel, Field
+from typing import List, Optional, Literal, Dict, Any
 
 
-class ResumeAction(Action):
+class ResumeAction(BaseModel):
     """Action for the Resume Screening environment."""
     
     decision: Literal["shortlist", "reject", "hold"] = Field(
@@ -18,8 +13,8 @@ class ResumeAction(Action):
     )
 
 
-class ResumeObservation(Observation):
-    """Observation from the Resume Screening environment - candidate information."""
+class ResumeObservation(BaseModel):
+    """Observation from the Resume Screening environment."""
     
     candidate_id: str = Field(..., description="Unique identifier for the candidate")
     target_role: Literal["junior", "mid", "senior"] = Field(
@@ -42,3 +37,6 @@ class ResumeObservation(Observation):
         default=None, 
         description="Ground truth decision for evaluation"
     )
+    done: bool = Field(default=False, description="Whether the episode is done")
+    reward: float = Field(default=0.0, description="Reward for the last action")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
