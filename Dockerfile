@@ -1,24 +1,20 @@
 FROM python:3.11-slim
 
-RUN useradd -m -u 1000 user
-USER user
+WORKDIR /app
 
-WORKDIR /home/user/app
-
+# Install dependencies
 RUN pip install --no-cache-dir \
-    openenv-core[core] \
     fastapi \
     uvicorn \
     pydantic \
-    groq \
-    openai \
-    requests
+    httpx
 
-COPY --chown=user . .
+# Copy application
+COPY . .
 
-ENV PYTHONPATH="/home/user/app:$PYTHONPATH"
-ENV RESUME_DIFFICULTY="easy"
+# Set environment variables
+ENV PYTHONPATH="/app:$PYTHONPATH"
 
 EXPOSE 7860
 
-CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD uvicorn server.app:app --host 0.0.0.0 --port 7860

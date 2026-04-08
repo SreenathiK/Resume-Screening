@@ -9,7 +9,10 @@ from uuid import uuid4
 from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 
-from openenv.core.env_server.interfaces import Environment
+try:
+    from openenv.core.env_server.interfaces import Environment
+except ImportError:
+    Environment = object  # Dummy fallback
 from openenv.core.env_server.types import State
 
 try:
