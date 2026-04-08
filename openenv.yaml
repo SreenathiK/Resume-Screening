@@ -1,0 +1,45 @@
+spec_version: 1
+name: resume-screening-env
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+description: "Resume Screening Environment for evaluating candidates for engineering roles"
+version: 0.1.0
+
+# Environment configuration
+environment:
+  # Default difficulty level (easy, medium, hard)
+  RESUME_DIFFICULTY: easy
+  
+  # Server configuration
+  RESUME_HOST: 0.0.0.0
+  RESUME_PORT: 8000
+  
+  # Python path for imports
+  PYTHONPATH: /app
+
+# Health check configuration
+health_check:
+  endpoint: /health
+  interval: 30
+  timeout: 10
+  retries: 3
+
+# Environment metadata
+metadata:
+  author: "Your Name"
+  description: "AI agent evaluates candidates for Junior, Mid-level, and Senior Software Engineer roles"
+  tags:
+    - resume-screening
+    - hiring
+    - ai-agent
+    - openenv
+  difficulty_levels:
+    - easy
+    - medium
+    - hard
+  supported_roles:
+    - junior
+    - mid
+    - senior
