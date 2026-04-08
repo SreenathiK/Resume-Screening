@@ -1,20 +1,24 @@
 """
 Inference script for Resume Screening Environment.
-Uses HTTP client (no WebSocket issues).
+Prints structured output to stdout for validation.
 """
 
 import asyncio
 import os
+import sys
 import textwrap
 from typing import List, Optional
+
+sys.stdout.reconfigure(line_buffering=True)
+
 from openai import OpenAI
-from simple_client import AsyncResumeScreeningClient as ResumeScreeningClient
+
+from simple_client import AsyncSimpleResumeClient as ResumeScreeningClient
 from models import ResumeAction, ResumeObservation
 
-
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")  
-HF_TOKEN = os.getenv("HF_TOKEN")  
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000")
 
@@ -51,10 +55,12 @@ SYSTEM_PROMPT = textwrap.dedent(
 
 
 def log_start(task: str, env: str, model: str) -> None:
+    """Log the start of an episode - MUST print to stdout."""
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    """Log each step of the episode - MUST print to stdout."""
     error_val = error if error else "null"
     done_val = str(done).lower()
     print(
@@ -64,6 +70,7 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
 
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+    """Log the end of an episode - MUST print to stdout."""
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
         f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
@@ -84,6 +91,7 @@ def build_user_prompt(
     last_reward: float,
     history: List[str]
 ) -> str:
+    """Build the user prompt for the LLM."""
     skills_str = ", ".join(skills[:5]) if skills else "None listed"
     projects_str = ", ".join(projects[:3]) if projects else "None listed"
     history_block = "\n".join(history[-4:]) if history else "No previous decisions"
@@ -116,6 +124,7 @@ def get_model_decision(
     last_reward: float,
     history: List[str]
 ) -> str:
+    """Get decision from the LLM."""
     user_prompt = build_user_prompt(
         step=step,
         candidate_id=observation.candidate_id,
@@ -154,6 +163,9 @@ def get_model_decision(
 async def main() -> None:
     """Main inference loop."""
     
+    if not HF_TOKEN or HF_TOKEN == "dummy":
+        print("[WARNING] HF_TOKEN not set. Using mock decisions for testing.", flush=True)
+    
     client = OpenAI(
         base_url=API_BASE_URL,
         api_key=HF_TOKEN or "dummy"
@@ -165,8 +177,7 @@ async def main() -> None:
         env = ResumeScreeningClient(base_url=SERVER_URL)
         result = await env.reset()
         print(f"[INFO] Connected successfully!", flush=True)
-        print(f"[INFO] First candidate: {result.observation.candidate_id}", flush=True)
-        
+        print(f"[INFO] First candidate: {result.observation.candidate_id}", flush=True)        
     except Exception as e:
         print(f"[ERROR] Failed to connect: {e}", flush=True)
         print(f"[INFO] Make sure the server is running on {SERVER_URL}", flush=True)
@@ -176,7 +187,6 @@ async def main() -> None:
     steps_taken = 0
     score = 0.0
     success = False
-    
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
     
     try:
@@ -186,10 +196,14 @@ async def main() -> None:
         for step in range(1, MAX_STEPS + 1):
             if result.done:
                 break
-            
-            decision = get_model_decision(
-                client, step, observation, last_reward, history
-            )
+            if HF_TOKEN and HF_TOKEN != "dummy":
+                decision = get_model_decision(
+                    client, step, observation, last_reward, history
+                )
+            else:
+                mock_decisions = ["shortlist", "reject", "shortlist", "hold"]
+                decision = mock_decisions[(step - 1) % len(mock_decisions)]
+                print(f"[INFO] Mock decision: {decision}", flush=True)
             
             action = ResumeAction(decision=decision)
             result = await env.step(action)
@@ -200,7 +214,6 @@ async def main() -> None:
             rewards.append(reward)
             steps_taken = step
             last_reward = reward
-            
             log_step(
                 step=step,
                 action=decision,
@@ -216,9 +229,9 @@ async def main() -> None:
             
             if done:
                 break
-        
         total_reward = sum(rewards) if rewards else 0.0
-        score = total_reward / MAX_TOTAL_REWARD if MAX_TOTAL_REWARD > 0 else 0.0
+        max_possible_reward = MAX_STEPS * MAX_REWARD_PER_STEP
+        score = total_reward / max_possible_reward if max_possible_reward > 0 else 0.0
         score = min(max(score, 0.0), 1.0)
         success = score >= SUCCESS_SCORE_THRESHOLD
         
@@ -231,12 +244,11 @@ async def main() -> None:
             await env.close()
         except:
             pass
-        
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":
-    print("="*60)
-    print("Resume Screening Inference")
-    print("="*60)
+    print("="*60, flush=True)
+    print("Resume Screening Inference", flush=True)
+    print("="*60, flush=True)
     asyncio.run(main())
