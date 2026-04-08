@@ -1,25 +1,51 @@
+---
+title: Resume Screening Environment
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+sdk_version: "1.0"
+app_file: server/app.py
+pinned: false
+---
+
 # Resume Screening Environment
 
-A real-world resume screening system that simulates evaluating candidates for multiple job roles (Junior, Mid-level, and Senior Software Engineer). This environment allows AI agents to evaluate candidate resumes and decide whether to shortlist, reject, or hold candidates based on role requirements.
+An AI-powered system that automatically screens job candidates for software engineering roles (Junior, Mid, Senior). An LLM agent evaluates resumes and decides to shortlist, reject, or hold candidates based on role requirements.
 
 ## Features
 
-- **Three difficulty levels**: Easy, Medium, Hard
-- **Role-based evaluation**: Junior, Mid-level, and Senior Engineer positions
-- **Realistic candidate data**: Education, experience, skills, projects, certifications, career gaps
-- **Reward system**: Proper incentives for correct decisions
-- **OpenEnv compatible**: HTTP and WebSocket API endpoints
-- **Docker support**: Containerized deployment
+- 🎯 **3 Difficulty Levels** - Easy, Medium, Hard
+- 👥 **3 Job Roles** - Junior, Mid-level, Senior Engineer
+- 📊 **Realistic Data** - Education, skills, projects, experience, career gaps
+- 🐳 **Docker Support** - Containerized deployment
+- 🔌 **OpenEnv Compatible** - Standard API for AI agents
 
-## Prerequisites
+## API Endpoints
 
-- Python 3.10 or higher
-- pip or uv package manager
-- (Optional) Docker Desktop for containerized deployment
+| Endpoint  | Method |           Description                |
+|-----------|--------|--------------------------------------|
+| `/reset`  | POST   | Start a new screening session        |
+| `/step`   | POST   | Make a decision on current candidate |
+| `/health` | GET    | Health check                         |
+| `/docs`   | GET    | Interactive API documentation        |
 
-## Installation
+## Decisions
 
-### 1. Clone or download the project
+| Action      |           Description                |
+|-------------|--------------------------------------|
+| `shortlist` | Candidate meets requirements         |
+| `reject`    | Candidate does not meet requirements |
+| `hold`      | Borderline case, needs review        |
+
+## Local Development
 
 ```bash
-cd Resume-Screening
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+uvicorn server.app:app --reload --port 7860
+
+# Run inference (another terminal)
+python inference.py
