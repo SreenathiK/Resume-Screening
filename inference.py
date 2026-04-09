@@ -9,7 +9,11 @@ import sys
 
 sys.stdout.reconfigure(line_buffering=True)
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    print("[ERROR] openai not installed. Please run: pip install openai", flush=True)
+    sys.exit(1)
 
 # MUST use THEIR environment variables - no defaults!
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
