@@ -1,4 +1,4 @@
-# server/app.py - Updated to handle difficulty levels
+# server/app.py - Complete with main function
 
 from fastapi import FastAPI, HTTPException
 from typing import Dict, Any, List, Optional
@@ -174,6 +174,12 @@ async def root():
     }
 
 
-if __name__ == "__main__":
+# IMPORTANT: Add this main function for openenv validation
+def main():
+    """Entry point for openenv."""
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=7860)
+
+
+if __name__ == "__main__":
+    main()
