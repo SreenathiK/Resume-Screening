@@ -8,7 +8,6 @@ import subprocess
 import sys
 import os
 
-# Auto-install missing packages
 def install_package(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
@@ -30,7 +29,6 @@ import asyncio
 
 sys.stdout.reconfigure(line_buffering=True)
 
-# Environment variables
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
@@ -117,11 +115,10 @@ async def run_task(task_name, difficulty):
     
     env_client = ResumeClient(SERVER_URL)
     rewards = []
-    decisions = []  # Track decisions for each step
+    decisions = []  
     steps_taken = 0
     
     try:
-        # Pass difficulty to reset
         result = env_client.reset(difficulty=difficulty)
         observation = result.observation
         
@@ -129,11 +126,9 @@ async def run_task(task_name, difficulty):
             if result.done:
                 break
             
-            # Get decision from LLM
             decision = get_llm_decision(observation)
-            decisions.append(decision)  # Store the decision
+            decisions.append(decision)  
             
-            # Execute action
             action = ResumeAction(decision=decision)
             result = env_client.step(action)
             
@@ -150,7 +145,6 @@ async def run_task(task_name, difficulty):
                 observation = result.observation
         
         total_reward = sum(rewards) if rewards else 0.0
-        # Ensure score is strictly between 0 and 1 (not 0.0, not 1.0)
         score = max(0.001, min(0.999, total_reward / MAX_STEPS))
         return score, steps_taken, rewards, decisions
         
@@ -162,7 +156,6 @@ async def run_task(task_name, difficulty):
 
 
 async def main():
-    # Define 3 tasks with different difficulties
     tasks = [
         ("task=easy", "EASY"),
         ("task=medium", "MEDIUM"),
@@ -173,18 +166,14 @@ async def main():
         print(f"[START] {task_name} env=resume_screening_env model={MODEL_NAME}", flush=True)
         
         score, steps, rewards, decisions = await run_task(task_name, difficulty)
-        
-        # Print steps with actual decisions
         for i, (reward, decision) in enumerate(zip(rewards, decisions), 1):
             done_status = "true" if i == steps else "false"
             print(f"[STEP] step={i} action={decision} reward={reward:.2f} done={done_status} error=null", flush=True)
-        
-        # Ensure score is between 0 and 1 (not exactly 0 or 1)
         final_score = max(0.001, min(0.999, score))
         rewards_str = ",".join(f"{r:.2f}" for r in rewards)
         success_status = "true" if final_score > 0.5 else "false"
         print(f"[END] success={success_status} steps={steps} score={final_score:.3f} rewards={rewards_str}", flush=True)
-        print("", flush=True)  # Empty line between tasks
+        print("", flush=True) 
 
 
 if __name__ == "__main__":

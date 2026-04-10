@@ -5,7 +5,6 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import uuid
 
-# Models
 class ResumeAction(BaseModel):
     decision: str
 
@@ -22,8 +21,6 @@ class ResumeObservation(BaseModel):
     done: bool = False
     reward: float = 0.0
 
-
-# Different candidate pools for each difficulty
 CANDIDATES = {
     "easy": [
         {"id": "JUNIOR_001", "role": "junior", "exp": 1.5, "skills": ["Python", "Java"], "projects": ["E-commerce"], "truth": "shortlist"},
@@ -100,10 +97,8 @@ class ResumeScreeningEnvironment:
         )
 
 
-# Create FastAPI app
 app = FastAPI(title="Resume Screening Environment")
 
-# Store environments per session
 environments = {}
 
 
@@ -137,7 +132,6 @@ async def step(request: Dict[str, Any]):
     
     env = environments[session_id]
     
-    # Handle both formats
     if "action" in request and isinstance(request["action"], dict) and "value" in request["action"]:
         action_map = {1: "shortlist", 2: "reject", 3: "hold"}
         decision = action_map.get(request["action"]["value"], "hold")
@@ -172,9 +166,6 @@ async def root():
             "health": "GET /health"
         }
     }
-
-
-# IMPORTANT: Add this main function for openenv validation
 def main():
     """Entry point for openenv."""
     import uvicorn

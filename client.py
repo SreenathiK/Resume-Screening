@@ -182,28 +182,29 @@ class SimpleResumeScreeningClient(ResumeScreeningClient):
         return self.reset()
     
     def step_with_tracking(self, action: ResumeAction) -> StepResult[ResumeObservation]:
-        """
-        Execute step and track decision history and rewards.
-        
-        Args:
-            action: ResumeAction with screening decision
-            
-        Returns:
-            StepResult with observation
-        """
-        result = self.step(action)
-        if self._current_observation:
-            self.decision_history.append({
-                "candidate_id": self._current_observation.candidate_id,
-                "decision": action.decision,
-                "reward": result.reward,
-                "ground_truth": self._current_observation.ground_truth_decision,
-            })
-        
-        if result.reward is not None:
-            self.total_reward += result.reward
-        
-        return result
+    # Capture BEFORE stepping
+    current_candidate_id = (
+        self._current_observation.candidate_id 
+        if self._current_observation else "unknown"
+    )
+    current_ground_truth = (
+        self._current_observation.ground_truth_decision
+        if self._current_observation else None
+    )
+    
+    result = self.step(action)
+    
+    self.decision_history.append({
+        "candidate_id": current_candidate_id,  
+        "decision": action.decision,
+        "reward": result.reward,
+        "ground_truth": current_ground_truth,    
+    })
+    
+    if result.reward is not None:
+        self.total_reward += result.reward
+    
+    return result
     
     def get_statistics(self) -> Dict:
         """
